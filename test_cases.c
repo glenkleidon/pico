@@ -1,6 +1,7 @@
 #include "httpresponse.h"
 #include "testmethods.h"
 #include "base64.h"
+#include "authenticate.h"
 
 #include <stdio.h>
 #include <string.h>

@@ -23,5 +23,8 @@ base64.o: base64.c base64.h
 testmethods.o: testmethods.c testmethods.h
 	gcc -g -c -o testmethods.o testmethods.c
 
-tests: test_cases.c httpresponse.o testmethods.o base64.o
+authenticate.o: authenticate.c authenticate.h
+	gcc -g -c -o authenticate.o authenticate.c
+
+tests: test_cases.c httpresponse.o testmethods.o base64.o authenticate.o
 	gcc -g -o test_cases $^
