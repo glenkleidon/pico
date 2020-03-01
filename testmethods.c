@@ -62,10 +62,10 @@ void check_int(int expected, int actual, char *message)
    }   
    if (!msg) 
    { 
-        printf(" Expected %u, actual %u",result, expected, actual);
+        printf(" Expected %u, actual %u\r\n", expected, actual);
    }else 
    {
-       printf("%s-%s",result,testname,msg);
+       printf("%s-%s\r\n",testname,msg);
    }
 }
 void check_str(char *expected, char *actual, char *message)

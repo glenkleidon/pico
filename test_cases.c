@@ -1,7 +1,7 @@
-#include "httpresponse.h"
 #include "testmethods.h"
 #include "base64.h"
 #include "authenticate.h"
+#include "httpresponse.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -81,8 +81,21 @@ void test_base64_decoding(char *set_name)
 void test_auth_decoding(char *set_name)
 {
     new_set(set_name);
-    new_test("Basic Auth is decoded");
+    new_test("Basic Auth is decoded without error");
     char * test_data = "Authorization: Basic QWxhZGRpbjpPcGVuU2VzYW1l";
+    user_credentials *cred = credentials(test_data);
+    check_int(0,cred->error_code, DEFAULT_MESSAGE);
+
+    new_test("Basic Auth password decodes as expected");
+    check_str("Aladdin",cred->username, DEFAULT_MESSAGE);
+
+    new_test("Basic Auth username decodes as expected");
+    check_str("OpenSesame",cred->password,DEFAULT_MESSAGE);
+
+    new_test("Basic Auth password decodes is at step 1");
+    check_int(0,cred->error_code, DEFAULT_MESSAGE);
+
+
 
 }
 

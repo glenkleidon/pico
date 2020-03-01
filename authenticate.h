@@ -3,17 +3,16 @@
 
 typedef struct 
 {
-    /* data */
     int step;
     char *username;
     char *password;
     char *bearer;
     int error_code;
-} authenticate_user;
+} user_credentials;
 
-authenticate_user *credentials();
+user_credentials* credentials(const char * token);
 
-authenticate_user *require_credentials(char * realm);
+user_credentials* require_credentials(char * realm);
 
 #endif /* HTTPD_AUTH__ */
 
