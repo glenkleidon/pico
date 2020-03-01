@@ -1,6 +1,8 @@
 # Pico HTTP Server in C 
 
-This is a very simple HTTP server for Unix, using fork(). It's very easy to use
+This is a very simple HTTP server for Unix, entirely in C.
+
+This is a clone of the PICO project. It's very easy to use
 
 ## How to use
 
