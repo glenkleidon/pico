@@ -15,12 +15,14 @@
 #define CONNMAX 1000
 
 static int listenfd, clients[CONNMAX];
+static char *returnHeaders[CONNMAX];
 static void error(char *);
 static void startServer(const char *);
 static void respond(int);
 
 typedef struct { char *name, *value; } header_t;
-static header_t reqhdr[17] = { {"\0", "\0"} };
+#define MAX_REQUEST_HEADERS 49
+static header_t reqhdr[MAX_REQUEST_HEADERS+1] = { {"\0", "\0"} };
 static int clientfd;
 
 static char *buf;
@@ -128,6 +130,8 @@ void respond(int n)
     int rcvd, fd, bytes_read;
     char *ptr;
 
+    returnHeaders[n] = NULL;
+
     buf = malloc(65535);
     rcvd=recv(clients[n], buf, 65535, 0);
 
@@ -154,7 +158,7 @@ void respond(int n)
 
         header_t *h = reqhdr;
         char *t, *t2;
-        while(h < reqhdr+16) {
+        while(h < reqhdr+MAX_REQUEST_HEADERS) {
             char *k,*v,*t;
             k = strtok(NULL, "\r\n: \t"); if (!k) break;
             v = strtok(NULL, "\r\n");     while(*v && *v==' ') v++;
@@ -167,8 +171,10 @@ void respond(int n)
         }
         t++; // now the *t shall be the beginning of user payload
         t2 = request_header("Content-Length"); // and the related header if there is  
+        fprintf(stderr,"Expecting %s bytes",t2); 
         payload = t;
         payload_size = t2 ? atol(t2) : (rcvd-(t-buf));
+        fprintf(stderr,"All %u Bytes Received\r\n",payload_size); 
 
         // bind clientfd to stdout, making it easier to write
         clientfd = clients[n];

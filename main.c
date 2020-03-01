@@ -1,4 +1,8 @@
 #include "httpd.h"
+#include <stdio.h>
+#include <stdarg.h>
+#include "httpresponse.h"
+
 
 int main(int c, char** v)
 {
@@ -9,18 +13,22 @@ int main(int c, char** v)
 void route()
 {
     ROUTE_START()
+    fprintf(stderr, "starting route");
 
     ROUTE_GET("/")
     {
-        printf("HTTP/1.1 200 OK\r\n\r\n");
-        printf("Hello! You are using %s", request_header("User-Agent"));
+        fprintf(stderr, "In GET");
+        ok("Hello! You are using ", request_header("User-Agent"));
     }
 
     ROUTE_POST("/")
     {
-        printf("HTTP/1.1 200 OK\r\n\r\n");
-        printf("Wow, seems that you POSTed %d bytes. \r\n", payload_size);
-        printf("Fetch the data using `payload` variable.");
+        fprintf(stderr, "In Post handling %u\r\n",payload_size);
+        char size[50];
+        sprintf(size,"%u",payload_size);
+        fprintf(stderr, "Received %s bytes\r\n",size);
+        ok("Wow, seems that you POSTed ",size," bytes. \r\n", 
+         "Fetch the data using `payload` variable.");
     }
   
     ROUTE_END()
