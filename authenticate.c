@@ -1,6 +1,6 @@
 #include "authenticate.h"
 
-authenticate_user *rcredentials()
+authenticate_user *credentials()
 {
 
 }
