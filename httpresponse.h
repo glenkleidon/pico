@@ -93,6 +93,6 @@ void release_response_header(header_r *responseheader);
 char* all_response_headers();
 header_r *find_response_header(const char* header);
 
-char *assign_string(char *source, const char *target);
+char *assign_string(char *targetstr, const char *sourcestr);
 
 #endif /* HTTPD_RESPONSE__ */

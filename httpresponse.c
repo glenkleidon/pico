@@ -5,16 +5,16 @@
 #include <string.h>
 #include <strings.h>
 
-char *assign_string(char *source, const char *target)
+char *assign_string(char *targetstr, const char *sourcestr)
 {
-  if (source)
+  if (targetstr)
   {
-      if (strlen(source)>0) free(source);
+      if (strlen(targetstr)>0) free(targetstr);
   }
-  int sz = strlen(target);
-  source = malloc(sizeof(char)*(1+sz));
-  strncpy(source, target, sz);
-  return source;
+  int sz = strlen(sourcestr);
+  targetstr = malloc(sizeof(char)*(1+sz));
+  strncpy(targetstr, sourcestr, sz);
+  return targetstr;
 }
 
 

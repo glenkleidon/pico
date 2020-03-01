@@ -17,5 +17,11 @@ main.o: main.c httpd.h
 httpd.o: httpd.c httpd.h
 	gcc -g -c -o httpd.o httpd.c
 
-tests: test_cases.c httpresponse.o 
+base64.o: base64.c base64.h
+	gcc -g -c -o base64.o base64.c
+
+testmethods.o: testmethods.c testmethods.h
+	gcc -g -c -o testmethods.o testmethods.c
+
+tests: test_cases.c httpresponse.o testmethods.o base64.o
 	gcc -g -o test_cases $^
