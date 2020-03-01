@@ -24,7 +24,7 @@ void test_http_codes(char *set_name)
     check_str("Network Authentication Required",http_description(511),DEFAULT_MESSAGE);
     
     new_test("100 Continue");
-    check_str("Continue",http_description(100)DEFAULT_MESSAGE);
+    check_str("Continue",http_description(100),DEFAULT_MESSAGE);
 
 }
 
@@ -72,7 +72,7 @@ void test_base64_decoding(char *set_name)
 
     new_test("Encoded data returns to original data");
     test_data=base64_decode(encoded_text,strlen(encoded_text),&sz);
-    check_str("This is plain text", test_data,);
+    check_str("This is plain text", test_data,DEFAULT_MESSAGE);
     free(decoded_text);
     free(encoded_text);
 }
@@ -82,7 +82,7 @@ void test_auth_decoding(char *set_name)
     new_set(set_name);
     new_test("Basic Auth is decoded");
     char * test_data = "Authorization: Basic QWxhZGRpbjpPcGVuU2VzYW1l";
-    
+
 }
 
 int main(int c, char** v)

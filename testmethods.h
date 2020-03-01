@@ -12,7 +12,7 @@
 #define pass_message printf("%s%s%s",ANSI_COLOR_GREEN,"PASS: ",ANSI_COLOR_RESET);
 #define fail_message printf("%s%s%s",ANSI_COLOR_RED,"FAIL: ",ANSI_COLOR_RESET);
 #define skip_message printf("%s%s%s",ANSI_COLOR_MAGENTA,"SKIP: ",ANSI_COLOR_RESET);
-#define DEFAULT_MESSAGE NULL
+#define DEFAULT_MESSAGE "\0"
 
 void new_test(char *new_test_name);
 void new_set(char * new_set_name);
