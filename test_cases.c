@@ -95,8 +95,6 @@ void test_auth_decoding(char *set_name)
     new_test("Basic Auth password decodes is at step 1");
     check_int(0,cred->error_code, DEFAULT_MESSAGE);
 
-
-
 }
 
 int main(int c, char** v)

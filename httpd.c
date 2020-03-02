@@ -170,11 +170,14 @@ void respond(int n)
             if (t[1] == '\r' && t[2] == '\n') break;
         }
         t++; // now the *t shall be the beginning of user payload
-        t2 = request_header("Content-Length"); // and the related header if there is  
-        fprintf(stderr,"Expecting %s bytes",t2); 
+        t2 = request_header("Content-Length"); // and the related header if there is 
         payload = t;
         payload_size = t2 ? atol(t2) : (rcvd-(t-buf));
-        fprintf(stderr,"All %u Bytes Received\r\n",payload_size); 
+        if (t2) 
+        {
+            fprintf(stderr,"Expecting %s bytes\r\n",t2); 
+            fprintf(stderr,"%u Bytes Received\r\n",payload_size); 
+        }
 
         // bind clientfd to stdout, making it easier to write
         clientfd = clients[n];

@@ -13,11 +13,11 @@ int main(int c, char** v)
 void route()
 {
     ROUTE_START()
-    fprintf(stderr, "starting route");
+    fprintf(stderr, "starting route\r\n");
 
     ROUTE_GET("/")
     {
-        fprintf(stderr, "In GET");
+        fprintf(stderr, "In GET\r\n");
         ok("Hello! You are using ", request_header("User-Agent"));
     }
 

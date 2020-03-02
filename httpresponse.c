@@ -4,19 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
-
-char *assign_string(char *targetstr, const char *sourcestr)
-{
-  if (targetstr)
-  {
-      if (strlen(targetstr)>0) free(targetstr);
-  }
-  int sz = strlen(sourcestr);
-  targetstr = malloc(sizeof(char)*(1+sz));
-  strncpy(targetstr, sourcestr, sz);
-  return targetstr;
-}
-
+#include "picoutils.h"
 
 char * http_description(int response_code)
 {
