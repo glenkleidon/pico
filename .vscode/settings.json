@@ -5,6 +5,9 @@
         "netdb.h": "c",
         "inet.h": "c",
         "httpconst.h": "c",
-        "httpd.h": "c"
+        "httpd.h": "c",
+        "authenticate.h": "c",
+        "fcntl.h": "c",
+        "signal.h": "c"
     }
 }
