@@ -1,4 +1,5 @@
 #include "httpresponse.h"
+#include "httpconst.h"
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -34,13 +35,18 @@ char *response_header(const char* header)
    return (h) ? h->value : NULL;
 }
 
+void reset_response_headers()
+{
+    release_response_header(reshdr);
+}
+
 void release_response_header(header_r *responseheader)
 {
     if (responseheader && (strlen(responseheader->name)>0 || strlen(responseheader->value)>0))
     {
-        free(responseheader->name);
-        free(responseheader->format);
-        free(responseheader->value);
+        free(responseheader->name); responseheader->name=NULL;
+        free(responseheader->format); responseheader->format=NULL;
+        free(responseheader->value); responseheader->value=NULL;
     }
 }
 
@@ -77,25 +83,25 @@ void send_header(int code)
       {
         printf("%s: %s\r\n", h->name, h->value);
       }
+      h++;
   }
   printf("\r\n");
 }
 
+
+
 void _ok(const char *content, ...) 
 {
-   send_header(200);
-   OUTPUT_CONTENT;
+   SENDCONTENT(200);
 }
 
 void _notfound(const char *content, ...)
 {
-   send_header(404); 
-   OUTPUT_CONTENT;
+   SENDCONTENT(404); 
 }
 
 void _notauthorized(const char *content, ...)
 {
-   add_response_header("WWW-Authenticate","Basic realm='\"%s\"","my realm");
-   send_header(401);
-   OUTPUT_CONTENT;
+   add_response_header(HEADER_WWW_AUTHENTICATE,"Basic realm=\"%s\"","my realm");
+   SENDCONTENT(401);
 }

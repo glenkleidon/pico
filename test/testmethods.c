@@ -1,6 +1,7 @@
 #include "../include/testmethods.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 
@@ -41,8 +42,12 @@ void end_run()
 }
 
 
+void check_int(int expected, int actual)
+{
+   check_int_msg(expected, actual, NULL);
+}
 
-void check_int(int expected, int actual, char *message)
+void check_int_msg(int expected, int actual, char *message)
 {
   testCount++;
   totalTestCount++;
@@ -68,7 +73,13 @@ void check_int(int expected, int actual, char *message)
        printf("%s-%s\r\n",testname,msg);
    }
 }
-void check_str(char *expected, char *actual, char *message)
+
+void check_str(char *expected, char *actual)
+{
+   check_str_msg(expected, actual, NULL); 
+}
+
+void check_str_msg(char *expected, char *actual, char *message)
 { 
   testCount++;
   totalTestCount++;

@@ -3,12 +3,15 @@
 #include <stdarg.h>
 #include "httpresponse.h"
 
-
+#ifndef _TESTING_
 int main(int c, char** v)
 {
-    serve_forever("12913");
+    char *portNo = DEFAULT_PORT_NO;
+    if (c>1) portNo=v[1];
+    serve_forever(portNo);
     return 0;
 }
+#endif
 
 void route()
 {
@@ -18,7 +21,11 @@ void route()
     ROUTE_GET("/")
     {
         fprintf(stderr, "In GET\r\n");
-        ok("Hello! You are using ", request_header("User-Agent"));
+        OK("Hello! You are using ", request_header("User-Agent"));
+    }
+    ROUTE_GET("/chunkme")
+    {
+        OK("chunked line 1","chunked line 2","chunked line 3\r\n and 4 in 1 chunk");
     }
 
     ROUTE_POST("/")
@@ -27,7 +34,7 @@ void route()
         char size[50];
         sprintf(size,"%u",payload_size);
         fprintf(stderr, "Received %s bytes\r\n",size);
-        ok("Wow, seems that you POSTed ",size," bytes. \r\n", 
+        OK("Wow, seems that you POSTed ",size," bytes. \r\n", 
          "Fetch the data using `payload` variable.");
     }
   

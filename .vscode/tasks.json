@@ -4,11 +4,6 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "echo",
-            "type": "shell",
-            "command": "echo Hello"
-        },
-        {
             "label": "make server",
             "type": "shell",
             "command": "make clean;make"
@@ -17,6 +12,11 @@
             "label": "make tests",
             "type": "shell",
             "command": "make clean;make tests"
-        }
+        },
+        {
+            "label": "make responses",
+            "type": "shell",
+            "command": "make clean;make responses"
+        }        
     ]
 }

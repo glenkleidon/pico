@@ -16,8 +16,10 @@
 
 void new_test(char *new_test_name);
 void new_set(char * new_set_name);
-void check_int(int expected, int actual, char *message);
-void check_str(char *expected, char *actual, char *message);
+void check_int(int expected, int actual);
+void check_int_msg(int expected, int actual, char *message);
+void check_str(char *expected, char *actual);
+void check_str_msg(char *expected, char *actual, char *message);
 void end_run();
 
 

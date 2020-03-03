@@ -13,3 +13,10 @@ server: main.o httpd.o httpresponse.o picoutils.o
 
 tests: test_cases.c httpresponse.o testmethods.o base64.o authenticate.o picoutils.o
 	gcc -g -o ./bin/test_cases $^
+
+## Compile with debugging.
+%.o: %.c 
+	gcc -g -c $< -o $@
+
+responses: test_responses.c httpresponse.o picoutils.o
+	gcc -g -o ./bin/test_responses $^

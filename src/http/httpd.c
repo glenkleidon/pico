@@ -1,4 +1,5 @@
 #include "httpd.h"
+#include "httpconst.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -26,9 +27,11 @@ static header_t reqhdr[MAX_REQUEST_HEADERS+1] = { {"\0", "\0"} };
 static int clientfd;
 
 static char *buf;
+char _pico_hostname[1024] = "\0";
 
 void serve_forever(const char *PORT)
 {
+    pico_hostname = &_pico_hostname[0];
     struct sockaddr_in clientaddr;
     socklen_t addrlen;
     char c;    
@@ -79,8 +82,30 @@ void startServer(const char *port)
 
     // getaddrinfo for host
     memset (&hints, 0, sizeof(hints));
-    hints.ai_family = AF_INET;
+    hints.ai_family =  AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_CANONNAME;
+
+    // extract host name (if http name has been set)
+    _pico_hostname[0] = '\0';
+    int gai_result;
+    if (gai_result=getaddrinfo(_pico_hostname,"http",&hints, &res)!=0)
+    {
+       fprintf(stderr, 
+        "Unable to get FQDN (%s) using local hostname instead.\r\n",gai_strerror(gai_result));
+       // could not get it.  just use hostname
+       strcpy(_pico_hostname, getenv("HOSTNAME"));
+    }
+    else
+    {
+       for(p=res; p!=NULL; p=p->ai_next) 
+       {
+         fprintf(stderr,"hostname: %s\r\n",p->ai_canonname);
+       }      
+       freeaddrinfo(res);
+    }
+    // get the Socket information for binding
+    hints.ai_family=AF_INET;
     hints.ai_flags = AI_PASSIVE;
     if (getaddrinfo( NULL, port, &hints, &res) != 0)
     {
@@ -170,7 +195,7 @@ void respond(int n)
             if (t[1] == '\r' && t[2] == '\n') break;
         }
         t++; // now the *t shall be the beginning of user payload
-        t2 = request_header("Content-Length"); // and the related header if there is 
+        t2 = request_header(HEADER_CONTENT_LENGTH); // and the related header if there is 
         payload = t;
         payload_size = t2 ? atol(t2) : (rcvd-(t-buf));
         if (t2) 

@@ -5,7 +5,8 @@
 #include <stdio.h>
 
 //Server control functions
-
+#define DEFAULT_PORT_NO "12913";
+char *pico_hostname; 
 void serve_forever(const char *PORT);
 
 // Client request
@@ -24,7 +25,7 @@ char *request_header(const char* name);
 
 void route();
 
-// some interesting macro for `route()`
+// some usefule macros for `route()`
 #define ROUTE_START()       if (0) {
 #define ROUTE(METHOD,URI)   } else if (strcmp(URI,uri)==0&&strcmp(METHOD,method)==0) {
 #define ROUTE_GET(URI)      ROUTE("GET", URI) 

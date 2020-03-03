@@ -1,5 +1,10 @@
 {
     "files.associations": {
-        "picoutils.h": "c"
+        "picoutils.h": "c",
+        "httpresponse.h": "c",
+        "netdb.h": "c",
+        "inet.h": "c",
+        "httpconst.h": "c",
+        "httpd.h": "c"
     }
 }

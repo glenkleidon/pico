@@ -7,6 +7,8 @@
 
 #define BASIC_TEXT "Basic"
 
+char * active_realm = "pico@";
+
 int basic(const char *token, user_credentials *user)
 {
     user->error_code=1;

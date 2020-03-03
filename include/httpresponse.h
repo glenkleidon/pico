@@ -1,94 +1,65 @@
 #ifndef _HTTPD_RESPONSE___
 #define _HTTPD_AUTH___
 
+#include <stdlib.h>
+
 #define MAXARG 1000
-#define ok(...) _ok(__VA_ARGS__, NULL)
-#define OUTPUT_CONTENT va_list ap; \
-   va_start(ap, content);\
+#define OK(...) _ok(__VA_ARGS__, NULL)
+#define NOTAUTHORIZED(...) _notauthorized(__VA_ARGS__, NULL);
+#define UNAUTHORIZED(...) _notauthorized(__VA_ARGS__, NULL);
+
+
+// Set Content Header and output
+#define SENDCONTENT(response_code) \
+   int _HC_argCount=0; int _HC_isChunked=0; int _HC_contentlength=0; \
+   const char *_HC_args = content; \ 
+   va_list _HC_ap;  va_start(_HC_ap, content); \
+   _HC_contentlength=strlen(content); \
+   while(content && _HC_argCount++<2) content = va_arg(_HC_ap, const char*); \
+   va_end(_HC_ap); \
+   if (_HC_argCount<2) \ 
+   { \
+      char _HC_contentlengthstr[13]; \
+      snprintf(_HC_contentlengthstr,13,"%u",_HC_contentlength); \
+      add_response_header(HEADER_CONTENT_LENGTH,"%s",_HC_contentlengthstr); \
+   } \
+   else  \
+   { \
+      _HC_isChunked=1; \
+      add_response_header(HEADER_TRANSFER_ENCODING,"%s",HEADER_TRANFSER_TYPE_CHUNKED); \
+   };\
+   send_header(response_code);\
+   content = _HC_args; \
+   va_start(_HC_ap, content);\
    while (content) \
    { \
-     printf(content);  \
-     content = va_arg(ap, const char*);\
+     if (_HC_isChunked) \
+     { \
+         printf("%x\r\n%s\r\n",strlen(content),content);\
+     } \
+     else \
+     { \
+         printf(content);   \
+     } \
+     content = va_arg(_HC_ap, const char*); \
    }\
-   va_end(ap)
+   va_end(_HC_ap); \
+   if (_HC_isChunked) printf("0\r\n"); \
+   printf("\r\n"); \
+   reset_response_headers(); 
+
 
 typedef struct { char *name, *format, *value; } header_r;
 #define MAX_RESPONSE_HEADERS 49
-static header_r reshdr[1+MAX_RESPONSE_HEADERS] = { {"\0", "\0","\0"} };
+static header_r reshdr[1+MAX_RESPONSE_HEADERS] = { {NULL, NULL,NULL} };
 
-#define MAX_RESPONSE_CODE 62
-typedef struct { int code; char *value; } http_response_code;
-static http_response_code HTTP_RESPONSE_CODES[MAX_RESPONSE_CODE+1] = {
-	{100, "Continue"},
-	{101, "Switching Protocols"},
-	{102, "Processing"},
-	{103, "Early Hints"},
-	{200, "OK"},
-	{201, "Created"},
-	{202, "Accepted"},
-	{203, "Non-Authoritative Information"},
-	{204, "No Content"},
-	{205, "Reset Content"},
-	{206, "Partial Content"},
-	{207, "Multi-Status"},
-	{208, "Already Reported"},
-	{226, "IM Used"},
-	{300, "Multiple Choices"},
-	{301, "Moved Permanently"},
-	{302, "Found"},
-	{303, "See Other"},
-	{304, "Not Modified"},
-	{306, "Switch Proxy"},
-	{307, "Temporary Redirect"},
-	{308, "Permanent Redirect"},
-	{400, "Bad Request"},
-	{401, "Unauthorized"},
-	{402, "Payment Required"},
-	{403, "Forbidden"},
-	{404, "Not Found"},
-	{405, "Method Not Allowed"},
-	{406, "Not Acceptable"},
-	{407, "Proxy Authentication Required"},
-	{408, "Request Timeout"},
-	{409, "Conflict"},
-	{410, "Gone"},
-	{411, "Length Required"},
-	{412, "Precondition Failed"},
-	{413, "Payload Too Large"},
-	{414, "URI Too Long"},
-	{415, "Unsupported Media Type"},
-	{416, "Range Not Satisfiable"},
-	{417, "Expectation Failed"},
-	{418, "I'm a teapot"},
-	{421, "Misdirected Request"},
-	{422, "Unprocessable Entity"},
-	{423, "Locked"},
-	{424, "Failed Dependency"},
-	{425, "Too Early"},
-	{426, "Upgrade Required"},
-	{428, "Precondition Required"},
-	{429, "Too Many Requests"},
-	{431, "Request Header Fields Too Large"},
-	{451, "Unavailable For Legal Reasons"},
-	{500, "Internal Server Error"},
-	{501, "Not Implemented"},
-	{502, "Bad Gateway"},
-	{503, "Service Unavailable"},
-	{504, "Gateway Timeout"},
-	{505, "HTTP Version Not Supported"},
-	{506, "Variant Also Negotiates"},
-	{507, "Insufficient Storage"},
-	{508, "Loop Detected"},
-	{510, "Not Extended"},
-	{511, "Network Authentication Required"}
-};
-
-void _ok(const char *content, ...) ;
+void _ok(const char *content, ...);
 void _notfound(const char *content, ...);
 void _notauthorized(const char *content, ...);
 char* http_description(int response_code);
 char* response_header(const char* header);
 void add_response_header(const char *header, const char *format, const char *value);
+void reset_response_headers();
 void release_response_header(header_r *responseheader);
 char* all_response_headers();
 header_r *find_response_header(const char* header);
