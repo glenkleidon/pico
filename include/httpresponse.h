@@ -1,5 +1,5 @@
 #ifndef _HTTPD_RESPONSE___
-#define _HTTPD_AUTH___
+#define _HTTPD_RESPONSE___
 
 #include <stdlib.h>
 
@@ -7,17 +7,18 @@
 #define OK(...) _ok(__VA_ARGS__, NULL)
 #define NOTAUTHORIZED(...) _notauthorized(__VA_ARGS__, NULL);
 #define UNAUTHORIZED(...) _notauthorized(__VA_ARGS__, NULL);
+#define FORBIDDEN(...) _forbidden(__VA_ARGS__, NULL);
 
 
 // Set Content Header and output
 #define SENDCONTENT(response_code) \
    int _HC_argCount=0; int _HC_isChunked=0; int _HC_contentlength=0; \
-   const char *_HC_args = content; \ 
+   const char *_HC_args = content; \
    va_list _HC_ap;  va_start(_HC_ap, content); \
    _HC_contentlength=strlen(content); \
    while(content && _HC_argCount++<2) content = va_arg(_HC_ap, const char*); \
    va_end(_HC_ap); \
-   if (_HC_argCount<2) \ 
+   if (_HC_argCount<2) \
    { \
       char _HC_contentlengthstr[13]; \
       snprintf(_HC_contentlengthstr,13,"%u",_HC_contentlength); \
@@ -55,7 +56,8 @@ static header_r reshdr[1+MAX_RESPONSE_HEADERS] = { {NULL, NULL,NULL} };
 
 void _ok(const char *content, ...);
 void _notfound(const char *content, ...);
-void _notauthorized(const char *content, ...);
+void _notauthorized(const char *realm, const char *content, ...);
+void _forbidden(const char *content, ...);
 char* http_description(int response_code);
 char* response_header(const char* header);
 void add_response_header(const char *header, const char *format, const char *value);

@@ -6,7 +6,7 @@
 
 //Server control functions
 #define DEFAULT_PORT_NO "12913";
-char *pico_hostname; 
+
 void serve_forever(const char *PORT);
 
 // Client request
@@ -19,11 +19,12 @@ char    *method,    // "GET" or "POST"
 char    *payload;     // for POST
 int      payload_size;
 
-char *request_header(const char* name);
-
+char* request_header(const char* name);
+char* pico_hostname();
 // user shall implement this function
 
 void route();
+
 
 // some usefule macros for `route()`
 #define ROUTE_START()       if (0) {

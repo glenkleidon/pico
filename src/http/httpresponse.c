@@ -66,7 +66,7 @@ void add_response_header(const char *header, const char *format, const char *val
       
       // length of the value is a bit ambigous here, so assign to a temporary before copying it in.
       char lvalue[2048];
-      snprintf(lvalue, 2048, format, value);
+      snprintf(lvalue, 2047, format, value);
       h->value =assign_string(h->value, lvalue);
    }
 }
@@ -100,8 +100,62 @@ void _notfound(const char *content, ...)
    SENDCONTENT(404); 
 }
 
-void _notauthorized(const char *content, ...)
+void _notauthorized(const char *realm, const char *content, ...)
 {
-   add_response_header(HEADER_WWW_AUTHENTICATE,"Basic realm=\"%s\"","my realm");
-   SENDCONTENT(401);
+    // ensure there is a safe realm to apply
+   char myRealm[1024]="PICOServer"; 
+   int rl = 0;
+   if (realm)
+   {  rl=strlen(realm);
+      strncpy(myRealm,realm,1023);
+   }
+   myRealm[rl]=0; 
+   add_response_header(HEADER_WWW_AUTHENTICATE,"Basic realm=\"%s\"",myRealm);
+   int _HC_argCount=0; int _HC_isChunked=0; int _HC_contentlength=0;
+   const char *_HC_args = content, HC_contentlengthstr=NULL; va_list _HC_ap; 
+   if (content) { 
+    va_start(_HC_ap, content); 
+   _HC_contentlength=strlen(content); 
+   while(content && _HC_argCount++<2) content = va_arg(_HC_ap, const char*); 
+   va_end(_HC_ap);
+   } 
+   if (_HC_argCount<2)  
+   { 
+       if (HC_contentlengthstr) {
+        char _HC_contentlengthstr[13]; 
+        snprintf(_HC_contentlengthstr,13,"%u",_HC_contentlength); 
+        add_response_header(HEADER_CONTENT_LENGTH,"%s",_HC_contentlengthstr); 
+       }
+   } 
+   else  
+   { 
+      _HC_isChunked=1; 
+      add_response_header(HEADER_TRANSFER_ENCODING,"%s",HEADER_TRANFSER_TYPE_CHUNKED); 
+   };
+   send_header(401);
+   content = _HC_args; 
+   va_start(_HC_ap, content);
+   while (content) 
+   { 
+     if (_HC_isChunked) 
+     { 
+         printf("%x\r\n%s\r\n",strlen(content),content);
+     } 
+     else 
+     { 
+         printf(content);   
+     } 
+     content = va_arg(_HC_ap, const char*); 
+   }
+   va_end(_HC_ap); 
+   if (_HC_isChunked) printf("0\r\n"); 
+   printf("\r\n"); 
+   reset_response_headers(); 
+
+  // SENDCONTENT(401);
+}
+
+void _forbidden(const char *content, ...)
+{
+    SENDCONTENT(403);
 }

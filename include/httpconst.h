@@ -4,6 +4,7 @@
 #define HEADER_CONTENT_TYPE "Content-Type"
 #define HEADER_CONTENT_LENGTH "Content-Length"
 #define HEADER_WWW_AUTHENTICATE "WWW-Authenticate"
+#define HEADER_AUTHORIZATION "Authorization"
 #define HEADER_TRANSFER_ENCODING "Transfer-Encoding"
 #define HEADER_TRANFSER_TYPE_CHUNKED "chunked"
 

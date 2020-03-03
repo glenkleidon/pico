@@ -8,7 +8,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
 #include <netdb.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -27,11 +26,11 @@ static header_t reqhdr[MAX_REQUEST_HEADERS+1] = { {"\0", "\0"} };
 static int clientfd;
 
 static char *buf;
-char _pico_hostname[1024] = "\0";
+static char _pico_hostname[1024] = "\0";
+
 
 void serve_forever(const char *PORT)
 {
-    pico_hostname = &_pico_hostname[0];
     struct sockaddr_in clientaddr;
     socklen_t addrlen;
     char c;    
@@ -66,8 +65,14 @@ void serve_forever(const char *PORT)
         {
             if ( fork()==0 )
             {
+                // I am now the client - close the listener: client doesnt need it
+                close(listenfd); 
                 respond(slot);
                 exit(0);
+            } else 
+            {
+                // I am still the server - close the accepted handle: server doesnt need it.
+                close(clients[slot]);
             }
         }
 
@@ -92,7 +97,7 @@ void startServer(const char *port)
     if (gai_result=getaddrinfo(_pico_hostname,"http",&hints, &res)!=0)
     {
        fprintf(stderr, 
-        "Unable to get FQDN (%s) using local hostname instead.\r\n",gai_strerror(gai_result));
+        "Note: cant find the FQDN (%s). Using local hostname instead.\r\n",gai_strerror(gai_result));
        // could not get it.  just use hostname
        strcpy(_pico_hostname, getenv("HOSTNAME"));
     }
@@ -139,7 +144,7 @@ void startServer(const char *port)
 
 
 // get request header
-char *request_header(const char* name)
+char* request_header(const char* name)
 {
     header_t *h = reqhdr;
     while(h->name) {
@@ -222,4 +227,9 @@ void respond(int n)
     shutdown(clientfd, SHUT_RDWR);         //All further send and recieve operations are DISABLED...
     close(clientfd);
     clients[n]=-1;
+}
+
+char* pico_hostname()
+{
+    return &_pico_hostname[0];
 }

@@ -1,7 +1,12 @@
 #include "httpd.h"
+#include "httpconst.h"
+#include "httpresponse.h"
+#include "authenticate.h"
 #include <stdio.h>
 #include <stdarg.h>
-#include "httpresponse.h"
+#include <strings.h>
+
+user_credentials *user = NULL;
 
 #ifndef _TESTING_
 int main(int c, char** v)
@@ -13,8 +18,43 @@ int main(int c, char** v)
 }
 #endif
 
+int hasCredentials()
+{
+    int result = 0;
+    // Already logged in?
+    if (user && user->state>=AUTH_HAS_CREDENTIALS) return 1;
+    char *token = request_header(HEADER_AUTHORIZATION);
+    if (!token) 
+    {
+        UNAUTHORIZED(realm());
+    }
+    else
+    {
+      user = credentials(token);
+      if (user)
+      {
+          if (user->state=AUTH_HAS_CREDENTIALS) result=1;
+      }
+    }
+    return result;
+}
+
+int isAuthenticated()
+{
+  int result = 0;
+  if (!user) result = hasCredentials();
+  if (result) 
+  {
+      // call authentication method;
+  }  
+  return 0;
+}
+
+
 void route()
 {
+    //Ensure the hostname is initalized for authentication
+    auth_host = pico_hostname(); 
     ROUTE_START()
     fprintf(stderr, "starting route\r\n");
 
@@ -26,6 +66,24 @@ void route()
     ROUTE_GET("/chunkme")
     {
         OK("chunked line 1","chunked line 2","chunked line 3\r\n and 4 in 1 chunk");
+    }
+
+    ROUTE_GET("/secure")
+    {
+        fprintf(stderr, "In GET Secure\r\n");
+        if (!isAuthenticated()) 
+        {
+          //  char msg[1024] = "Sorry - you do not have access";
+          //  if (user) snprintf(msg, 1024, "Sorry %s, you do not have access", user->username);
+          //  FORBIDDEN(msg);
+            return; 
+        }
+        else
+        {
+            char okmsg[1024];
+            snprintf(okmsg,1024,"Welcome %s, nice to see you");
+            OK(okmsg);
+        }
     }
 
     ROUTE_POST("/")

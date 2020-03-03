@@ -1,5 +1,6 @@
 #define _TESTING_
-#include "httpresponse.h"
+
+#include "../include/httpresponse.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -13,5 +14,8 @@ int main(int c, char** v)
        "and the second line of the chunked response",
        "and this is some more chunked responses\r\nwith some more stuff\r\n");
 
-    UNAUTHORIZED("not authorized to access this function");
+    UNAUTHORIZED("MyRealm","not authorized to access this function");
+
+    UNAUTHORIZED(NULL);
+
 }

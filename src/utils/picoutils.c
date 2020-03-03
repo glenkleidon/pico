@@ -12,6 +12,7 @@ char *assign_string(char *targetstr, const char *sourcestr)
   }
   int sz = strlen(sourcestr);
   targetstr = malloc(sizeof(char)*(1+sz));
+  targetstr[sz]='\0';
   strncpy(targetstr, sourcestr, sz);
   return targetstr;
 }

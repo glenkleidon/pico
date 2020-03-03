@@ -8,6 +8,8 @@
         "httpd.h": "c",
         "authenticate.h": "c",
         "fcntl.h": "c",
-        "signal.h": "c"
+        "signal.h": "c",
+        "strings.h": "c",
+        "stdlib.h": "c"
     }
 }
