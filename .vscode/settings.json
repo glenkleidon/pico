@@ -10,6 +10,7 @@
         "fcntl.h": "c",
         "signal.h": "c",
         "strings.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "string.h": "c"
     }
 }

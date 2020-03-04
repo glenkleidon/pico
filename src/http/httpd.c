@@ -67,6 +67,7 @@ void serve_forever(const char *PORT)
             {
                 // I am now the client - close the listener: client doesnt need it
                 close(listenfd); 
+                init_response_headers();
                 respond(slot);
                 exit(0);
             } else 

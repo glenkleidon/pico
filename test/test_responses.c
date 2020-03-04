@@ -18,4 +18,6 @@ int main(int c, char** v)
 
     UNAUTHORIZED(NULL);
 
+    SEND_CONTENT(200,"ok","this is a message","in 4 parts");
+
 }
