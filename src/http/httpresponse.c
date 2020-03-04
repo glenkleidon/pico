@@ -165,6 +165,7 @@ void _notauthorized(const char *realm, const char *content, ...)
       strncpy(myRealm,realm,1023);
    }
    myRealm[rl]=0; 
+   add_response_header(HEADER_CONNECTION, "%s", HEADER_VALUE_CONNECTION_KEEP_ALIVE);
    add_response_header(HEADER_WWW_AUTHENTICATE,"Basic realm=\"%s\"",myRealm);
    SENDCONTENT(401);
 }
@@ -173,6 +174,7 @@ void _notauthorized(const char *realm, const char *content, ...)
 /// from the client.
 void _forbidden(const char *content, ...)
 {
+    add_response_header(HEADER_CONNECTION,"%s", HEADER_VALUE_CONNECTION_CLOSE);
     SENDCONTENT(403);
 }
 

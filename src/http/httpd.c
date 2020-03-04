@@ -15,7 +15,6 @@
 #define CONNMAX 1000
 
 static int listenfd, clients[CONNMAX];
-static char *returnHeaders[CONNMAX];
 static void error(char *);
 static void startServer(const char *);
 static void respond(int);
@@ -24,6 +23,7 @@ typedef struct { char *name, *value; } header_t;
 #define MAX_REQUEST_HEADERS 49
 static header_t reqhdr[MAX_REQUEST_HEADERS+1] = { {"\0", "\0"} };
 static int clientfd;
+static int keepalive;
 
 static char *buf;
 static char _pico_hostname[1024] = "\0";
@@ -66,6 +66,7 @@ void serve_forever(const char *PORT)
             if ( fork()==0 )
             {
                 // I am now the client - close the listener: client doesnt need it
+                keepalive=1;
                 close(listenfd); 
                 init_response_headers();
                 respond(slot);
@@ -161,63 +162,79 @@ void respond(int n)
     int rcvd, fd, bytes_read;
     char *ptr;
 
-    returnHeaders[n] = NULL;
-
     buf = malloc(65535);
-    rcvd=recv(clients[n], buf, 65535, 0);
 
-    if (rcvd<0)    // receive error
-        fprintf(stderr,("recv() error\n"));
-    else if (rcvd==0)    // receive socket closed
-        fprintf(stderr,"Client disconnected upexpectedly.\n");
-    else    // message received
+    while (keepalive)
     {
-        buf[rcvd] = '\0';
+        rcvd = recv(clients[n], buf, 65535, 0);
 
-        method = strtok(buf,  " \t\r\n");
-        uri    = strtok(NULL, " \t");
-        prot   = strtok(NULL, " \t\r\n"); 
-
-        fprintf(stderr, "\x1b[32m + [%s] %s\x1b[0m\n", method, uri);
-        
-        if (qs = strchr(uri, '?'))
+        if (rcvd < 0) 
+        { // receive error
+            fprintf(stderr, ("recv() error or session end\r\n"));
+            keepalive=0;
+        }
+        else if (rcvd == 0)
         {
-            *qs++ = '\0'; //split URI
-        } else {
-            qs = uri - 1; //use an empty string
+            // receive socket closed
+            fprintf(stderr, "Client disconnected upexpectedly.\r\n");
+            keepalive=0;
         }
-
-        header_t *h = reqhdr;
-        char *t, *t2;
-        while(h < reqhdr+MAX_REQUEST_HEADERS) {
-            char *k,*v,*t;
-            k = strtok(NULL, "\r\n: \t"); if (!k) break;
-            v = strtok(NULL, "\r\n");     while(*v && *v==' ') v++;
-            h->name  = k;
-            h->value = v;
-            h++;
-            fprintf(stderr, "[H] %s: %s\n", k, v);
-            t = v + 1 + strlen(v);
-            if (t[1] == '\r' && t[2] == '\n') break;
-        }
-        t++; // now the *t shall be the beginning of user payload
-        t2 = request_header(HEADER_CONTENT_LENGTH); // and the related header if there is 
-        payload = t;
-        payload_size = t2 ? atol(t2) : (rcvd-(t-buf));
-        if (t2) 
+        else // message received
         {
-            fprintf(stderr,"Expecting %s bytes\r\n",t2); 
-            fprintf(stderr,"%u Bytes Received\r\n",payload_size); 
+            buf[rcvd] = '\0';
+
+            method = strtok(buf, " \t\r\n");
+            uri = strtok(NULL, " \t");
+            prot = strtok(NULL, " \t\r\n");
+
+            fprintf(stderr, "\x1b[32m + [%s] %s\x1b[0m\n", method, uri);
+
+            if (qs = strchr(uri, '?'))
+            {
+                *qs++ = '\0'; //split URI
+            }
+            else
+            {
+                qs = uri - 1; //use an empty string
+            }
+
+            header_t *h = reqhdr;
+            char *t, *t2;
+            while (h < reqhdr + MAX_REQUEST_HEADERS)
+            {
+                char *k, *v;
+                k = strtok(NULL, "\r\n: \t");
+                if (!k)
+                    break;
+                v = strtok(NULL, "\r\n");
+                while (*v && *v == ' ')
+                    v++;
+                h->name = k;
+                h->value = v;
+                h++;
+                fprintf(stderr, "[H] %s: %s\n", k, v);
+                t = v + 1 + strlen(v);
+                if (t[1] == '\r' && t[2] == '\n')
+                    break;
+            }
+            t++;                                        // now the *t shall be the beginning of user payload
+            t2 = request_header(HEADER_CONTENT_LENGTH); // and the related header if there is
+            payload = t;
+            payload_size = t2 ? atol(t2) : (rcvd - (t - buf));
+            if (t2)
+            {
+                fprintf(stderr, "Expecting %s bytes\r\n", t2);
+                fprintf(stderr, "%u Bytes Received\r\n", payload_size);
+            }
+
+            // bind clientfd to stdout, making it easier to write
+            clientfd = clients[n];
+            dup2(clientfd, STDOUT_FILENO);
+            close(clientfd);
+
+            // call router
+            route();
         }
-
-        // bind clientfd to stdout, making it easier to write
-        clientfd = clients[n];
-        dup2(clientfd, STDOUT_FILENO);
-        close(clientfd);
-
-        // call router
-        route();
-
         // tidy up
         fflush(stdout);
         shutdown(STDOUT_FILENO, SHUT_WR);

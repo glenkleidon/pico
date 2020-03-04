@@ -7,6 +7,10 @@
 #define HEADER_AUTHORIZATION "Authorization"
 #define HEADER_TRANSFER_ENCODING "Transfer-Encoding"
 #define HEADER_TRANFSER_TYPE_CHUNKED "chunked"
+#define HEADER_KEEP_ALIVE "Keep-Alive"
+#define HEADER_CONNECTION "Connection"
+#define HEADER_VALUE_CONNECTION_KEEP_ALIVE "keep-alive"
+#define HEADER_VALUE_CONNECTION_CLOSE "close"
 
 #define MAX_RESPONSE_CODE 62
 typedef struct { int code; char *value; } http_response_code;
