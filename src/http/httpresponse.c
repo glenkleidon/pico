@@ -122,6 +122,10 @@ void _internal_send_content(int response_code, const char *content, va_list cont
             send_header(response_code);
             printf(content);
          }
+         else
+         {
+            send_header(response_code);
+         }
     }
     else
     {

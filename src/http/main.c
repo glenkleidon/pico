@@ -26,7 +26,7 @@ int hasCredentials()
     char *token = request_header(HEADER_AUTHORIZATION);
     if (!token) 
     {
-        UNAUTHORIZED(realm());
+        UNAUTHORIZED(realm(),"Not authorized to access this function");
     }
     else
     {
@@ -46,8 +46,10 @@ int isAuthenticated()
   if (result) 
   {
       // call authentication method;
+      fprintf(stderr, "User <%s> has logged in ",user->username);
+      result = 1;
   }  
-  return 0;
+  return result;
 }
 
 
@@ -73,15 +75,17 @@ void route()
         fprintf(stderr, "In GET Secure\r\n");
         if (!isAuthenticated()) 
         {
-          //  char msg[1024] = "Sorry - you do not have access";
-          //  if (user) snprintf(msg, 1024, "Sorry %s, you do not have access", user->username);
-          //  FORBIDDEN(msg);
+            // message if you are unathenticated.
+            char msg[1024] = "Not authorized to access function.";
+            // message if you are authenticated, but not authorized.
+            if (user) snprintf(msg, 1024, "Sorry %s, you do not have access to this function", user->username);
+            FORBIDDEN(msg);
             return; 
         }
         else
         {
             char okmsg[1024];
-            snprintf(okmsg,1024,"Welcome %s, nice to see you");
+            snprintf(okmsg,1024,"Welcome %s, nice to see you",user->username);
             OK(okmsg);
         }
     }
