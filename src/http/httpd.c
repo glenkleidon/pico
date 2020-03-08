@@ -27,7 +27,9 @@ static int keepalive;
 
 static char *buf;
 static char _pico_hostname[1024] = "\0";
-
+static char *bufptr;
+static int clientslot;
+static int eob;
 
 void serve_forever(const char *PORT)
 {
@@ -67,6 +69,7 @@ void serve_forever(const char *PORT)
             {
                 // I am now the client - close the listener: client doesnt need it
                 keepalive=1;
+                clientslot=slot;
                 close(listenfd); 
                 init_response_headers();
                 respond(slot);
@@ -156,84 +159,176 @@ char* request_header(const char* name)
     return NULL;
 }
 
+void reset_headers()
+{
+    header_t *h = reqhdr;
+    while(h->name) {
+        h->name="\0";
+        h++;
+    }
+}
+
+void reset_request()
+{
+    eob=0;
+    payload=NULL;
+    bufptr=buf;
+    reset_headers();
+}
+
+int get_bytes()
+{
+    // move the buffer point to the end of the last buffer
+    bufptr=bufptr+eob; 
+    
+    // calculate the remaining buffer size
+    int buffsize = buf+MAXBUFFER-bufptr;
+    if (buffsize>65534) buffsize=65534;
+    fprintf(stderr, "Slot: %u, buffsize: %u bytes\r\n",clientslot, buffsize);
+
+    // read the bytes from the socket.
+    int rcvd = recv(clients[clientslot], bufptr, buffsize, 0);
+
+    // handle outcome of recv call.
+    if (rcvd < 0) 
+    { // receive error
+        fprintf(stderr, "recv() error or session end\r\n");
+        keepalive=0;
+    }
+    else if (rcvd == 0)
+    {
+        // receive socket closed
+        fprintf(stderr, "Client disconnected upexpectedly.\r\n");
+        keepalive=0;
+    }
+    else // message received
+    {
+        fprintf(stderr, "Received %u bytes buf=%u, bufptr=%u\r\n",rcvd, buf, bufptr);
+        // terminate the incoming buffer;
+        bufptr[rcvd] = '\0';
+    }
+    // update the new end of buffer 
+    eob = eob+rcvd;
+
+    // return the number of bytes recieved on this occaion.
+    return rcvd;
+}
+
 //client connection
 void respond(int n)
 {
     int rcvd, fd, bytes_read;
     char *ptr;
 
-    buf = malloc(65535);
+    buf = malloc(MAXBUFFER);
+
+    // header pointers.
+    header_t *h = reqhdr;
+    char *header_name, *header_value;
+    char *t, *t2;
+    char *eohptr=NULL;
+    reset_request();
 
     while (keepalive)
     {
-        rcvd = recv(clients[n], buf, 65535, 0);
-
-        if (rcvd < 0) 
-        { // receive error
-            fprintf(stderr, ("recv() error or session end\r\n"));
-            keepalive=0;
-        }
-        else if (rcvd == 0)
+                
+        rcvd=get_bytes();
+        
+        if (rcvd>0)
         {
-            // receive socket closed
-            fprintf(stderr, "Client disconnected upexpectedly.\r\n");
-            keepalive=0;
-        }
-        else // message received
-        {
-            buf[rcvd] = '\0';
-
-            method = strtok(buf, " \t\r\n");
-            uri = strtok(NULL, " \t");
-            prot = strtok(NULL, " \t\r\n");
-
-            fprintf(stderr, "\x1b[32m + [%s] %s\x1b[0m\n", method, uri);
-
-            if (qs = strchr(uri, '?'))
+            //wait for the headers to be completely loaded.
+            if (!eohptr)
             {
-                *qs++ = '\0'; //split URI
-            }
-            else
-            {
-                qs = uri - 1; //use an empty string
-            }
+                eohptr=strstr(buf, "\r\n\r\n");
+                // if no dobule crlf is found, go back for more bytes.
+                if (!eohptr) 
+                {
+                    // TODO: if the buffer is full and still no header, then return a 413 Entity too large.
+                    continue;
+                }
+                // double crlf is found, reset bufptr back to the beginning. 
+                // note: EOB will still be the last by byte received.
+                bufptr=buf;
+            }  
+            int protcol_rcvd=0; 
+            int headers_rcvd=0;
 
-            header_t *h = reqhdr;
-            char *t, *t2;
-            while (h < reqhdr + MAX_REQUEST_HEADERS)
+            // extract the protocol, URL and 
+            if (!protcol_rcvd)
             {
-                char *k, *v;
-                k = strtok(NULL, "\r\n: \t");
-                if (!k)
+                method = strtok(bufptr, " \t\r\n");
+                uri = strtok(NULL, " \t");
+                prot = strtok(NULL, " \t\r\n");
+
+                if (method==NULL || uri == NULL || prot==NULL)
+                {
+                    // send bad request 400 
+                    keepalive=0;
                     break;
-                v = strtok(NULL, "\r\n");
-                while (*v && *v == ' ')
-                    v++;
-                h->name = k;
-                h->value = v;
-                h++;
-                fprintf(stderr, "[H] %s: %s\n", k, v);
-                t = v + 1 + strlen(v);
-                if (t[1] == '\r' && t[2] == '\n')
-                    break;
+                } 
+
+                protcol_rcvd=1;
+                fprintf(stderr, "\x1b[32m + [%s] %s\x1b[0m\n", method, uri);
+
+
+                if (querystring = strchr(uri, '?'))
+                {
+                    *querystring++ = '\0'; //split URI
+                }
+                else
+                {
+                    querystring = uri - 1; //use an empty string
+                }
             }
-            t++;                                        // now the *t shall be the beginning of user payload
-            t2 = request_header(HEADER_CONTENT_LENGTH); // and the related header if there is
-            payload = t;
-            payload_size = t2 ? atol(t2) : (rcvd - (t - buf));
-            if (t2)
+
+            if (!headers_rcvd && protcol_rcvd) 
             {
-                fprintf(stderr, "Expecting %s bytes\r\n", t2);
-                fprintf(stderr, "%u Bytes Received\r\n", payload_size);
+                header_t *h = reqhdr;
+                while (h < reqhdr + MAX_REQUEST_HEADERS)
+                {
+                    // is there a new header.
+                    header_name = strtok(NULL, "\r\n: \t");
+                    if (!header_name)
+                        break;
+                    
+                    header_value = strtok(NULL, "\r\n");
+                    while (*header_value && *header_value == ' ')
+                        header_value++;
+                    h->name = header_name;
+                    h->value = header_value;
+                    h++;
+                    fprintf(stderr, "[H] %s: %s\n", header_name, header_value);
+                    t = header_value + 1 + strlen(header_value);
+                    if (t[1] == '\r' && t[2] == '\n')
+                    {
+                        headers_rcvd=1;
+                        break;
+                    }
+                }
+                if (headers_rcvd)
+                {
+                    t++;                                        // now the *t shall be the beginning of user payload
+                    t2 = request_header(HEADER_CONTENT_LENGTH); // and the related header if there is
+                    payload = t;
+                    payload_size = t2 ? atol(t2) : (eob - (t - buf));
+                    if (t2)
+                    {
+                        fprintf(stderr, "Expecting %s bytes\r\n", t2);
+                        fprintf(stderr, "%u Bytes Received\r\n", payload_size);
+                    }
+                }
             }
+            if (payload)
+            { 
+                // bind clientfd to stdout, making it easier to write
+                clientfd = clients[n];
+                dup2(clientfd, STDOUT_FILENO);
+                close(clientfd);
 
-            // bind clientfd to stdout, making it easier to write
-            clientfd = clients[n];
-            dup2(clientfd, STDOUT_FILENO);
-            close(clientfd);
-
-            // call router
-            route();
+                // call router
+                route();
+                reset_request();
+            }
         }
         // tidy up
         fflush(stdout);

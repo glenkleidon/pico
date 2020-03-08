@@ -5,7 +5,8 @@
 #include <stdio.h>
 
 //Server control functions
-#define DEFAULT_PORT_NO "12913";
+#define DEFAULT_PORT_NO "12913"
+#define MAXBUFFER 131070
 
 void serve_forever(const char *PORT);
 
@@ -13,7 +14,7 @@ void serve_forever(const char *PORT);
 
 char    *method,    // "GET" or "POST"
         *uri,       // "/index.html" things before '?'
-        *qs,        // "a=1&b=2"     things after  '?'
+        *querystring,        // "a=1&b=2"     things after  '?'
         *prot;      // "HTTP/1.1"
 
 char    *payload;     // for POST
@@ -21,6 +22,10 @@ int      payload_size;
 
 char* request_header(const char* name);
 char* pico_hostname();
+int get_bytes();
+void reset_request();
+void reset_headers();
+
 // user shall implement this function
 
 void route();

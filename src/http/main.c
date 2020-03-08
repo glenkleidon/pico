@@ -46,7 +46,7 @@ int isAuthenticated()
   if (result) 
   {
       // call authentication method;
-      fprintf(stderr, "User <%s> has logged in ",user->username);
+      fprintf(stderr, "User <%s> has logged in\r\n",user->username);
       result = 1;
   }  
   return result;
