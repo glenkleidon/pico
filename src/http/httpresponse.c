@@ -90,16 +90,19 @@ void send_header(int code)
 {
   char *description = http_description(code);
   printf("HTTP/1.1 %u %s\r\n",code, description);
+  fprintf(stderr,"HTTP/1.1 %u %s\r\n",code, description);
   int i=0;
   header_r *h = reshdr;
   while( (h->value || h->name) && i<MAX_RESPONSE_HEADERS) {
       if (h->name && h->value)
       {
         printf("%s: %s\r\n", h->name, h->value);
+        fprintf(stderr,"[R] %s: %s\r\n", h->name, h->value);
       }
       h++;
   }
   printf("\r\n");
+  fprintf(stderr,"\r\n");
 }
 
 /// The function that actually outputs the content
@@ -121,6 +124,7 @@ void _internal_send_content(int response_code, const char *content, va_list cont
             add_response_header(HEADER_CONTENT_LENGTH, "%s", contentlengthstr);
             send_header(response_code);
             printf(content);
+            fprintf(stderr, content);
          }
          else
          {
@@ -132,16 +136,24 @@ void _internal_send_content(int response_code, const char *content, va_list cont
         // there are multiple arguments, so we will chunk the data.
         add_response_header(HEADER_TRANSFER_ENCODING,"%s",HEADER_TRANFSER_TYPE_CHUNKED); 
         send_header(response_code);
-        if (content) printf("%x\r\n%s\r\n",contentlength, content);
+        if (content)
+        {
+            printf("%x\r\n%s\r\n",contentlength, content);
+            fprintf(stderr,"%x\r\n%s\r\n",contentlength, content); 
+        } 
         while (arg_content)
         {
            contentlength=strlen(arg_content); 
-            if (contentlength>0) printf("%x\r\n%s\r\n", contentlength, arg_content);
+            if (contentlength>0)
+            { printf("%x\r\n%s\r\n", contentlength, arg_content);
+              fprintf(stderr,"%x\r\n%s\r\n", contentlength, arg_content);
+            }
             arg_content = va_arg(content_args, const char *);
         }
         printf("0\r\n");
     }
     printf("\r\n");
+    fprintf(stderr,"\r\n");
     reset_response_headers();
 }
 

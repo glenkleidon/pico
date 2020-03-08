@@ -23,7 +23,6 @@ typedef struct { char *name, *value; } header_t;
 #define MAX_REQUEST_HEADERS 49
 static header_t reqhdr[MAX_REQUEST_HEADERS+1] = { {"\0", "\0"} };
 static int clientfd;
-static int keepalive;
 
 static char *buf;
 static char _pico_hostname[1024] = "\0";
@@ -69,6 +68,7 @@ void serve_forever(const char *PORT)
             {
                 // I am now the client - close the listener: client doesnt need it
                 keepalive=1;
+                auth_attempts=0;
                 clientslot=slot;
                 close(listenfd); 
                 init_response_headers();
@@ -170,6 +170,7 @@ void reset_headers()
 
 void reset_request()
 {
+    fprintf(stderr,"\r\nPrepare for new request on slot:%u\r\n",clientslot);
     eob=0;
     payload=NULL;
     bufptr=buf;
@@ -198,7 +199,7 @@ int get_bytes()
     else if (rcvd == 0)
     {
         // receive socket closed
-        fprintf(stderr, "Client disconnected upexpectedly.\r\n");
+        fprintf(stderr, "Client disconnected gracefully.\r\n");
         keepalive=0;
     }
     else // message received
@@ -330,11 +331,11 @@ void respond(int n)
                 reset_request();
             }
         }
-        // tidy up
         fflush(stdout);
-        shutdown(STDOUT_FILENO, SHUT_WR);
-        close(STDOUT_FILENO);
     }
+    // tidy up stdout.
+    shutdown(STDOUT_FILENO, SHUT_WR);
+    close(STDOUT_FILENO);
 
     //Closing SOCKET
     shutdown(clientfd, SHUT_RDWR);         //All further send and recieve operations are DISABLED...

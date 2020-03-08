@@ -19,6 +19,8 @@ char    *method,    // "GET" or "POST"
 
 char    *payload;     // for POST
 int      payload_size;
+int      auth_attempts;
+int      keepalive;
 
 char* request_header(const char* name);
 char* pico_hostname();
