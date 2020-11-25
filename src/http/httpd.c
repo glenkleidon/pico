@@ -333,6 +333,7 @@ void respond(int n)
         }
         fflush(stdout);
     }
+    free(buf);
     // tidy up stdout.
     shutdown(STDOUT_FILENO, SHUT_WR);
     close(STDOUT_FILENO);
